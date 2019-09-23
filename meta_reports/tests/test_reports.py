@@ -4,11 +4,11 @@ from django.test.client import RequestFactory
 from edc_adverse_event.models import AeClassification
 from edc_list_data.site_list_data import site_list_data
 from model_mommy import mommy
+from meta_screening.tests.meta_test_case_mixin import MetaTestCaseMixin
+from meta_reports.ae_report import AeReport
 
-from ...ae_report import AEReport
 
-
-class TestReports(TestCase):
+class TestReports(MetaTestCaseMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         site_list_data.autodiscover()
@@ -19,10 +19,12 @@ class TestReports(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.subject_identifier = self.create_subject()
         self.user = User.objects.create(
             username="erikvw", is_staff=True, is_active=True
         )
+        subject_screening = self.get_subject_screening()
+        subject_consent = self.get_subject_consent(subject_screening)
+        self.subject_identifier = subject_consent.subject_identifier
 
     def test_aereport(self):
 
@@ -36,7 +38,7 @@ class TestReports(TestCase):
             ae_classification=ae_classification,
         )
 
-        report = AEReport(
+        report = AeReport(
             ae_initial=ae_initial,
             subject_identifier=ae_initial.subject_identifier,
             user=request.user,
